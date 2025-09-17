@@ -1,0 +1,34 @@
+// backend/server.js
+const express = require("express");
+const app = express();
+const PORT = 3000;
+
+app.use(express.json());
+
+const products = [
+  { id: "p1", name: "Laptop", price: 1500 },
+  { id: "p2", name: "Phone", price: 800 },
+];
+
+// Endpoint to get products
+app.get("/api/products", (req, res) => {
+  res.json(products);
+});
+
+// Shopping cart stored in memory (for simplicity)
+let cart = [];
+
+// Endpoint to add to cart
+app.post("/api/cart", (req, res) => {
+  const { productId } = req.body;
+  const prod = products.find(p => p.id === productId);
+  if (!prod) {
+    return res.status(404).json({ message: "Product not found" });
+  }
+  cart.push(prod);
+  res.json({ message: `Added ${prod.name} to cart` });
+});
+
+app.listen(PORT, () => {
+  console.log(`IShop backend running on port ${PORT}`);
+});

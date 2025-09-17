@@ -1,0 +1,130 @@
+// === BACKEND (Node.js + Express) ===
+// File: server.js
+
+
+const express = require("express");
+const cors = require("cors");
+
+
+const app = express();
+const PORT = 3000;
+
+
+app.use(cors());
+app.use(express.json());
+
+
+// Mock database
+const products = [
+{ id: "p1", name: "Laptop", price: 1500 },
+{ id: "p2", name: "Phone", price: 800 },
+{ id: "p3", name: "Headphones", price: 200 },
+];
+
+
+let cart = [];
+
+
+// Routes
+app.get("/api/products", (req, res) => {
+res.json(products);
+});
+
+
+app.get("/api/cart", (req, res) => {
+res.json(cart);
+});
+
+
+app.post("/api/cart", (req, res) => {
+const { productId } = req.body;
+const prod = products.find(p => p.id === productId);
+if (!prod) return res.status(404).json({ message: "Product not found" });
+
+
+cart.push(prod);
+res.json({ message: `${prod.name} added to cart`, cart });
+});
+
+
+app.post("/api/checkout", (req, res) => {
+if (cart.length === 0) {
+return res.json({ message: "Cart is empty" });
+}
+cart = []; // Clear cart after checkout
+res.json({ message: "Checkout successful! Thank you for shopping." });
+});
+
+
+app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));
+
+// === FRONTEND (HTML + JavaScript) ===
+// File: index.html
+
+
+/*
+<!DOCTYPE html>
+<html>
+<head>
+<title>IShop.com</title>
+</head>
+<body>
+<h1>Welcome to IShop.com</h1>
+<h2>Products</h2>
+<div id="products"></div>
+
+
+<h2>Cart</h2>
+<div id="cart"></div>
+<button onclick="checkout()">Checkout</button>
+
+
+<script>
+async function loadProducts() {
+const resp = await fetch("http://localhost:3000/api/products");
+const products = await resp.json();
+const div = document.getElementById("products");
+div.innerHTML = "";
+products.forEach(p => {
+const el = document.createElement("div");
+el.innerHTML = `
+<strong>${p.name}</strong> - $${p.price}
+<button onclick="addToCart('${p.id}')">Add to Cart</button>
+`;
+div.appendChild(el);
+});
+}
+
+
+async function loadCart() {
+const resp = await fetch("http://localhost:3000/api/cart");
+const cart = await resp.json();
+const div = document.getElementById("cart");
+div.innerHTML = cart.map(item => `${item.name} - $${item.price}`).join("<br>");
+}
+
+
+async function addToCart(productId) {
+await fetch("http://localhost:3000/api/cart", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({ productId })
+});
+loadCart();
+}
+
+
+async function checkout() {
+const resp = await fetch("http://localhost:3000/api/checkout", { method: "POST" });
+const result = await resp.json();
+alert(result.message);
+loadCart();
+}
+
+
+loadProducts();
+loadCart();
+</script>
+</body>
+</html>
+*/
