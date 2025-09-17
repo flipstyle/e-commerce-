@@ -1,0 +1,40 @@
+<?php
+header('Content-Type: application/json');
+require_once 'config.php';
+$action = $_GET['action'] ?? null;
+try{
+$pdo = get_pdo();
+if($action === 'get_products'){
+$stmt = $pdo->query('SELECT id, name, price, image FROM products ORDER BY id ASC');
+$products = $stmt->fetchAll();
+echo json_encode(['products'=>$products]);
+exit;
+}
+
+
+// read raw JSON body for POST
+$raw = file_get_contents('php://input');
+$payload = json_decode($raw, true);
+if($payload && ($payload['action'] ?? '') === 'place_order'){
+$order = $payload['order'];
+// basic validation
+if(empty($order['name']) || empty($order['email']) || empty($order['address'])){
+echo json_encode(['success'=>false,'error'=>'missing_fields']); exit;
+}
+// store order
+$stmt = $pdo->prepare('INSERT INTO orders (customer_name, customer_email, shipping_address, items_json, total, created_at) VALUES (?,?,?,?,?,NOW())');
+$items = $order['items'];
+$total = 0;
+foreach($items as $it) $total += $it['qty'] * $it['price'];
+$stmt->execute([$order['name'],$order['email'],$order['address'], json_encode($items), $total]);
+$orderId = $pdo->lastInsertId();
+echo json_encode(['success'=>true,'order_id'=>$orderId]);
+exit;
+}
+
+
+echo json_encode(['success'=>false,'error'=>'unknown_action']);
+} catch(Exception $e){
+http_response_code(500);
+echo json_encode(['success'=>false,'error'=>$e->getMessage()]);
+}
